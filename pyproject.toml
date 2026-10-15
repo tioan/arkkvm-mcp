@@ -1,0 +1,33 @@
+[project]
+name = "arkkvm-mcp"
+version = "0.1.0"
+description = "MCP server for ArkKVM IP-KVM devices: screenshots, keyboard, mouse, virtual media and Virtual USB Drive for AI agents"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
+authors = [{ name = "tioan", email = "mail@tioan.org" }]
+keywords = ["mcp", "model-context-protocol", "arkkvm", "kvm", "ip-kvm", "webrtc"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Topic :: System :: Hardware",
+]
+dependencies = [
+    "aiortc>=1.15.0",
+    "av>=17.1.0",
+    "httpx>=0.28.1",
+    "mcp[cli]>=1.2",
+    "pillow>=12.3.0",
+    "websockets>=17.2",
+]
+
+[project.urls]
+Homepage = "https://github.com/tioan/arkkvm-mcp"
+Issues = "https://github.com/tioan/arkkvm-mcp/issues"
+
+[project.scripts]
+arkkvm-mcp = "arkkvm_mcp.server:main"
+
+[build-system]
+requires = ["uv_build>=0.12.13,<0.13.0"]
+build-backend = "uv_build"
