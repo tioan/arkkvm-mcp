@@ -501,6 +501,24 @@ async def release_session() -> str:
 
 
 def main() -> None:
+    if sys.stdin.isatty():
+        print(
+            f"arkkvm-mcp: MCP server for {HOST or '<ARKKVM_HOST not set>'} waiting on stdio "
+            "(started by an MCP client such as Claude Desktop; Ctrl+C to quit)",
+            file=sys.stderr,
+        )
+    # anyio's stdio reader thread blocks on stdin and keeps the process alive after Ctrl+C,
+    # so exit right away. The KVM drops the WebRTC session when the WebSocket closes.
+    import signal
+
+    def _quit(signum, _frame):  # noqa: ANN001
+        if sys.stderr.isatty():
+            sys.stderr.write("\n")  # end the "^C" line cleanly in the terminal
+            sys.stderr.flush()
+        os._exit(128 + signum)
+
+    signal.signal(signal.SIGINT, _quit)
+    signal.signal(signal.SIGTERM, _quit)
     mcp.run()
 
 
