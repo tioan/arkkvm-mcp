@@ -35,6 +35,9 @@ from aiortc.sdp import candidate_from_sdp
 log = logging.getLogger("arkkvm_mcp")
 
 ABS_MAX = 32767
+# Session cookie set by /auth/login-local; current firmware names it
+# authTokenHttp when the device is reached over plain HTTP.
+AUTH_COOKIES = ("authToken", "authTokenHttp")
 
 
 try:  # surface messages to the model instead of a masked "Error executing tool"
@@ -143,8 +146,8 @@ class ArkKVM:
                 raise ArkKVMError(f"ArkKVM login failed: HTTP {r.status_code} {r.text[:200]}")
             csrf = r.headers.get("X-CSRF-Token") or r.json().get("csrfToken")
             cookies = dict(r.cookies)
-            if "authToken" not in cookies:
-                raise ArkKVMError("ArkKVM login returned no authToken cookie.")
+            if not any(name in cookies for name in AUTH_COOKIES):
+                raise ArkKVMError(f"ArkKVM login returned none of the cookies {', '.join(AUTH_COOKIES)}.")
             return cookies, csrf
 
     # ------------------------------------------------------------ connection
