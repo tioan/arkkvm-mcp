@@ -30,9 +30,17 @@ import httpx
 import websockets
 from aiortc import RTCPeerConnection, RTCSessionDescription
 from aiortc.mediastreams import MediaStreamError
+from aiortc.rtcsctptransport import RTCSctpTransport
 from aiortc.sdp import candidate_from_sdp
 
 log = logging.getLogger("arkkvm_mcp")
+
+# aiortc derives the SCTP role from the ICE role: as the (controlling) offerer it
+# acts as SCTP client, sends INIT and ignores an incoming INIT. The device sends
+# INIT as well and never answers ours, so the association never forms and the
+# "rpc" channel never opens. As SCTP server we answer the device's INIT instead.
+# This process only ever holds connections to the device, so patch globally.
+RTCSctpTransport.is_server = property(lambda self: True)
 
 ABS_MAX = 32767
 # Session cookie set by /auth/login-local; current firmware names it
@@ -228,9 +236,12 @@ class ArkKVM:
         except asyncio.TimeoutError:
             state = pc.iceConnectionState
             await self._close_conn()
+            if state in ("connected", "completed"):
+                hint = "ICE succeeded, but the 'rpc' data channel (SCTP over DTLS) never opened."
+            else:
+                hint = "UDP between this machine and the KVM must be reachable."
             raise ArkKVMError(
-                f"WebRTC connection to {self.http_base} timed out (ICE state: {state}). "
-                "UDP between this machine and the KVM must be reachable."
+                f"WebRTC connection to {self.http_base} timed out (ICE state: {state}). {hint}"
             ) from None
         log.info("connected to %s", self.http_base)
 
