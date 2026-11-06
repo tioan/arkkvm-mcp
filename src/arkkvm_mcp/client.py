@@ -28,7 +28,7 @@ from urllib.parse import urlparse
 
 import httpx
 import websockets
-from aiortc import RTCPeerConnection, RTCSessionDescription
+from aiortc import RTCConfiguration, RTCPeerConnection, RTCSessionDescription
 from aiortc.mediastreams import MediaStreamError
 from aiortc.rtcsctptransport import RTCSctpTransport
 from aiortc.sdp import candidate_from_sdp
@@ -190,7 +190,10 @@ class ArkKVM:
         cookies, csrf = await self._login()
         self._cookies, self._csrf = cookies, csrf
 
-        pc = RTCPeerConnection()
+        # No ICE servers: aiortc would otherwise default to Google's public STUN
+        # server, which adds about 5 s to gathering and a request to Google on every
+        # connect. The device is reached directly, so host candidates are enough.
+        pc = RTCPeerConnection(RTCConfiguration(iceServers=[]))
         pc.addTransceiver("video", direction="recvonly")
         dc = pc.createDataChannel("rpc", ordered=True)
         opened = asyncio.Event()
