@@ -34,6 +34,7 @@ on the `rpc` data channel.
 | --- | --- | --- |
 | `ARKKVM_HOST` | – (required) | `192.168.1.50` or `https://arkkvm.example` |
 | `ARKKVM_PASSWORD` | – | Required when the device has a local password (auth mode is detected automatically) |
+| `ARKKVM_PASSWORD_FILE` | – | Read the password from this file instead (takes precedence over `ARKKVM_PASSWORD`; read once at startup, trailing newline dropped). Keeps it out of the process environment - a pipe such as `<(op read ...)` works too |
 | `ARKKVM_KEYBOARD_LAYOUT` | `us` | Default layout for `type_text` (`us`, `de`) |
 | `ARKKVM_IDLE_TIMEOUT` | `120` | Seconds without tool calls before the session is released (0 = never) |
 | `ARKKVM_KEY_DELAY_MS` | `15` | Delay between HID reports |

@@ -35,6 +35,26 @@ DEFAULT_MAX_WIDTH = int(os.environ.get("ARKKVM_SCREENSHOT_WIDTH", "1280"))
 SETTLE_MAX_MS = int(os.environ.get("ARKKVM_SETTLE_MAX_MS", "2000"))
 ALLOW_DANGEROUS = os.environ.get("ARKKVM_ALLOW_DANGEROUS_RPC", "") in ("1", "true", "yes")
 
+
+def _password() -> str | None:
+    """The device password: from ARKKVM_PASSWORD_FILE if set, else ARKKVM_PASSWORD.
+
+    A file (or a pipe such as /dev/fd/N from a process substitution) keeps the
+    password out of the process environment, where other processes of the
+    same user can read it. Read once at startup; a trailing newline is dropped.
+    """
+    path = os.environ.get("ARKKVM_PASSWORD_FILE")
+    if path:
+        try:
+            with open(path, encoding="utf-8") as f:
+                return f.read().rstrip("\r\n") or None
+        except OSError as e:
+            raise SystemExit(f"ARKKVM_PASSWORD_FILE: cannot read {path}: {e.strerror}") from None
+    return os.environ.get("ARKKVM_PASSWORD")
+
+
+PASSWORD = _password()
+
 # RPC methods blocked in rpc_call unless ARKKVM_ALLOW_DANGEROUS_RPC=1
 DANGEROUS_RPC = {
     "facrotyReset", "factoryReset", "resetConfig", "resetNetworkFactory", "deregisterDevice",
@@ -55,7 +75,7 @@ async def lifespan(_server: FastMCP):
         raise SystemExit("ARKKVM_HOST is not set (e.g. ARKKVM_HOST=192.168.1.50)")
     kvm = ArkKVM(
         HOST,
-        password=os.environ.get("ARKKVM_PASSWORD"),
+        password=PASSWORD,
         idle_timeout=float(os.environ.get("ARKKVM_IDLE_TIMEOUT", "120")),
         verify_tls=os.environ.get("ARKKVM_VERIFY_TLS", "") in ("1", "true", "yes"),
     )
